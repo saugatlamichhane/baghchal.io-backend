@@ -8,6 +8,7 @@ import User from "./models/User.js";
 import profileRoutes from './routes/profile.js';
 import searchRoutes from './routes/search.js'
 import friendsRoutes from './routes/friends.js'
+import leaderboardRoutes from "./routes/leaderboard.js";
 
 dotenv.config();
 
@@ -50,3 +51,4 @@ app.listen(5000, () => console.log("🚀 Server running on port 5000"));
 app.use("/api", profileRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/friends", friendsRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
