@@ -1,5 +1,7 @@
 // index.js
 import express from "express";
+import { createServer } from "http";
+import initSocketServer from "./socketServer.js"
 import cors from "cors";
 import dotenv from "dotenv";
 import admin from "./firebase-admin.js";
@@ -45,10 +47,13 @@ app.post("/api/auth/google", async (req, res) => {
   }
 });
 
-app.listen(5000, () => console.log("🚀 Server running on port 5000"));
-
 
 app.use("/api", profileRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/friends", friendsRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+
+const httpServer = createServer(app);
+initSocketServer(httpServer);
+httpServer.listen(5000, () => console.log("🚀 Server running on port 5000"));
+
