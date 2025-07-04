@@ -11,7 +11,7 @@ import profileRoutes from './routes/profile.js';
 import searchRoutes from './routes/search.js'
 import friendsRoutes from './routes/friends.js'
 import leaderboardRoutes from "./routes/leaderboard.js";
-
+import feedbackRoutes from "./routes/feedback.js";
 dotenv.config();
 
 const app = express();
@@ -52,6 +52,7 @@ app.use("/api", profileRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/friends", friendsRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 const httpServer = createServer(app);
 initSocketServer(httpServer);
