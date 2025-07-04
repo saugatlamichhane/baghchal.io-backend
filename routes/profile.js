@@ -21,7 +21,9 @@ router.get("/profile/:uid", async (req, res) => {
         name: user.name,
         photo: user.photo,
         elo: user.elo,
-        stats: user.stats || { wins: 0, losses: 0, draws: 0 }, // default
+        wins: user.wins,
+        losses: user.losses,
+        draws: user.draws // default
         // Add more fields if needed
       },
     });
