@@ -21,38 +21,60 @@ const VALID_EDGES = new Set([
 
   // And so on — include every valid line in the real board (can generate programmatically too)
 ]);
-
 async function updateStats(io, roomId, winner) {
   const room = io.sockets.adapter.rooms.get(roomId);
   if (!room || !room.meta) return;
 
   const { goat, tiger } = room.meta;
-  const loser = winner === "goat" ? tiger : goat;
+  const winnerId = winner === "goat" ? goat : tiger;
+  const loserId = winner === "goat" ? tiger : goat;
+
+  const K = 16;
 
   try {
-    // Update winner: +1 win, +10 ELO
-    await User.updateOne(
-      { uid: winner === "goat" ? goat : tiger },
-      {
-        $inc: {
-          wins: 1,
-          elo: 10
-        }
-      }
+    // Fetch both users
+    const [winnerUser, loserUser] = await Promise.all([
+      User.findOne({ uid: winnerId }),
+      User.findOne({ uid: loserId }),
+    ]);
+
+    if (!winnerUser || !loserUser) {
+      console.error("❌ One or both users not found");
+      return;
+    }
+
+    // Calculate expected scores
+    const expectedWin =
+      1 / (1 + Math.pow(10, (loserUser.elo - winnerUser.elo) / 400));
+    const expectedLose = 1 - expectedWin;
+
+    // Calculate new Elo ratings
+    const winnerNewElo = Math.round(
+      winnerUser.elo + K * (1 - expectedWin)
+    );
+    const loserNewElo = Math.round(
+      loserUser.elo + K * (0 - expectedLose)
     );
 
-    // Update loser: +1 loss, -10 ELO
-    await User.updateOne(
-      { uid: loser },
-      {
-        $inc: {
-          losses: 1,
-          elo: -10
+    // Update both users
+    await Promise.all([
+      User.updateOne(
+        { uid: winnerId },
+        {
+          $inc: { wins: 1 },
+          $set: { elo: winnerNewElo },
         }
-      }
-    );
+      ),
+      User.updateOne(
+        { uid: loserId },
+        {
+          $inc: { losses: 1 },
+          $set: { elo: loserNewElo },
+        }
+      ),
+    ]);
 
-    console.log(`📊 Stats updated: ${winner} won`);
+    console.log(`📊 Stats updated: ${winner} won, Elo updated`);
   } catch (err) {
     console.error("❌ Failed to update stats:", err);
   }
