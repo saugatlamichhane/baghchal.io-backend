@@ -139,7 +139,7 @@ function tigerHasValidMove(board) {
 export default function initSocketServer(httpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173",   // <- your front-end
+      origin: "https://baghchal.io",   // <- your front-end
       credentials: true,
     },
   });
