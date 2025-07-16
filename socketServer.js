@@ -1,6 +1,7 @@
 // socketServer.js  ── matchmaking + realtime game transport
 import { Server } from "socket.io";
 import User from "./models/User.js";
+import Challenge from "./models/Challenge.js"; 
 
 const VALID_EDGES = new Set([
   "1-1:1-2", "1-2:1-3", "1-3:1-4", "1-4:1-5",
@@ -176,6 +177,49 @@ export default function initSocketServer(httpServer) {
 
   io.on("connection", (socket) => {
     /* player asks to find match */
+
+  socket.on("join_challenge", ({ challengeId }) => {
+    socket.join(challengeId);
+    console.log(`📥 ${socket.id} joined room ${challengeId}`);
+  });
+
+  // 👉 Handle move and broadcast to room
+  socket.on("make_move", async ({ challengeId, board, turn }) => {
+    try {
+      // Save new board state in DB
+      await Challenge.findByIdAndUpdate(challengeId, {
+        board,
+        turn,
+        updatedAt: new Date()
+      });
+
+      // Broadcast move to the other player
+      socket.to(challengeId).emit("move_made", { board, turn });
+    } catch (err) {
+      console.error("❌ Move saving failed:", err);
+    }
+  });
+
+  // 👉 Handle game end
+  socket.on("game_over", async ({ challengeId, winnerUid }) => {
+    try {
+      const challenge = await Challenge.findById(challengeId);
+      if (!challenge || challenge.status !== "in_progress") return;
+
+      challenge.status = "completed";
+      challenge.result = winnerUid === "draw" ? "draw" : winnerUid;
+      await challenge.save();
+
+      // Notify all players in room
+      io.to(challengeId).emit("challenge_completed", { winnerUid });
+    } catch (err) {
+      console.error("❌ Game over failed:", err);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Socket disconnected:", socket.id);
+  });
     socket.on("find-match", ({ role, uid }) => {
       socket.data.uid = uid;
       const oppRole = role === "goat" ? "tiger" : "goat";
@@ -215,6 +259,7 @@ if (!state) return;
       state.board.goats.push(to);
       state.turn = "tiger";
       io.to(roomId).emit("state", state);
+
     });
 
 
@@ -229,6 +274,8 @@ if (!st) return;
       arr[idx]   = to;
       st.turn    = st.turn === "goat" ? "tiger" : "goat";
       io.to(roomId).emit("state", st);
+
+
 if (st.turn === "tiger" && !tigerHasValidMove(st.board)) {
   io.to(roomId).emit("game-over", { winner: "goat" });
   await updateStats(io, roomId, "goat");
