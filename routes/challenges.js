@@ -17,19 +17,47 @@ router.post("/", async (req, res) => {
 });
 
 // 📌 Get all pending and ongoing challenges for a user
+// 📌 Get all pending and ongoing challenges for a user, with opponent info
 router.get("/:uid", async (req, res) => {
   const { uid } = req.params;
   try {
     const challenges = await Challenge.find({
       $or: [{ challengerUid: uid }, { challengedUid: uid }],
-      status: { $in: ["pending", "accepted", "in_progress"] }
+      status: { $in: ["pending", "accepted", "in_progress"] },
     }).sort({ updatedAt: -1 });
 
-    res.json({ success: true, challenges });
+    // Fetch opponent names
+    const userMap = {};
+    const uids = Array.from(
+      new Set(challenges.flatMap(ch => [ch.challengerUid, ch.challengedUid]))
+    );
+
+    const users = await User.find({ uid: { $in: uids } });
+    users.forEach(user => {
+      userMap[user.uid] = {
+        name: user.name,
+        photo: user.photo,
+      };
+    });
+
+    const enriched = challenges.map(ch => {
+      const opponentUid = ch.challengerUid === uid ? ch.challengedUid : ch.challengerUid;
+      return {
+        ...ch.toObject(),
+        opponent: {
+          uid: opponentUid,
+          ...userMap[opponentUid],
+        }
+      };
+    });
+
+    res.json({ success: true, challenges: enriched });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Error fetching challenges" });
   }
 });
+
 
 // 📌 Accept a challenge → set to "in_progress" and init board
 router.post("/accept", async (req, res) => {
