@@ -4,6 +4,22 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
+// 📌 Reject a challenge
+router.post("/reject", async (req, res) => {
+  const { challengeId } = req.body;
+  try {
+    const challenge = await Challenge.findById(challengeId);
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    challenge.status = "rejected";
+    await challenge.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reject challenge" });
+  }
+});
+
 // 📌 Create a new challenge
 router.post("/", async (req, res) => {
   const { challengerUid, challengedUid } = req.body;
