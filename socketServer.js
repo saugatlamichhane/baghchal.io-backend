@@ -225,23 +225,17 @@ export default function initSocketServer(httpServer) {
     } catch (err) {
       console.error("❌ Move saving failed:", err);
     }
-  });
+    if (turn === "tiger" && !tigerHasValidMove(board)) {
+  io.to(challengeId).emit("game-over", { winner: "goat" });
+  await updateStats(io, challengeId, "goat");
+  return;
+}
 
-  // 👉 Handle game end
-  socket.on("game_over", async ({ challengeId, winnerUid }) => {
-    try {
-      const challenge = await Challenge.findById(challengeId);
-      if (!challenge || challenge.status !== "in_progress") return;
-
-      challenge.status = "completed";
-      challenge.result = winnerUid === "draw" ? "draw" : winnerUid;
-      await challenge.save();
-
-      // Notify all players in room
-      io.to(challengeId).emit("challenge_completed", { winnerUid });
-    } catch (err) {
-      console.error("❌ Game over failed:", err);
-    }
+  if (board.goatsKilled >= 5) {
+    io.to(challengeId).emit("game-over", { winner: "tiger" });
+    await updateStats(io, challengeId, "tiger");
+    return;
+  }
   });
 
   socket.on("disconnect", () => {
