@@ -189,7 +189,6 @@ export default function initSocketServer(httpServer) {
     if (!challenge || challenge.status !== "in_progress") return;
 
     // Check if move is valid
-    const posStr = `${to.row}-${to.col}`;
     const alreadyOccupied = board.goats.concat(board.tigers).some(p => p.row === to.row && p.col === to.col);
     const goatLimitReached = board.goats.length >= 20;
 
