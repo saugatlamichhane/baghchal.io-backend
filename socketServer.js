@@ -275,7 +275,7 @@ export default function initSocketServer(httpServer) {
         // await updateStats(io, challengeId, "goat");
         return;
       }
-
+      console.log(`goats killed ${board.goatsKilled}`);
       if (board.goatsKilled >= 5) {
         console.log(
           `Game over: Tigers win in room ${challengeId}, winnerUid: ${challenge.challengedUid}`
