@@ -143,11 +143,11 @@ async function makeUpdateStats(challengeId, winner) {
     await Promise.all([
       User.updateOne(
         { uid: winnerId },
-        { $inc: { wins: 1 }, $set: { elo: winnerNewElo } }
+        { $inc: { wins: 1, gamesPlayed: 1 }, $set: { elo: winnerNewElo } }
       ),
       User.updateOne(
         { uid: loserId },
-        { $inc: { losses: 1 }, $set: { elo: loserNewElo } }
+        { $inc: { losses: 1, gamesPlayed: 1 }, $set: { elo: loserNewElo } }
       ),
     ]);
 
