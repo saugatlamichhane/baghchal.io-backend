@@ -86,18 +86,27 @@ async function updateStats(io, roomId, winner) {
       return;
     }
 
-    const expectedWin = 1 / (1 + Math.pow(10, (loserUser.elo - winnerUser.elo) / 400));
+    const expectedWin =
+      1 / (1 + Math.pow(10, (loserUser.elo - winnerUser.elo) / 400));
     const expectedLose = 1 - expectedWin;
 
     const winnerNewElo = Math.round(winnerUser.elo + K * (1 - expectedWin));
     const loserNewElo = Math.round(loserUser.elo + K * (0 - expectedLose));
 
     await Promise.all([
-      User.updateOne({ uid: winnerId }, { $inc: { wins: 1 }, $set: { elo: winnerNewElo } }),
-      User.updateOne({ uid: loserId }, { $inc: { losses: 1 }, $set: { elo: loserNewElo } })
+      User.updateOne(
+        { uid: winnerId },
+        { $inc: { wins: 1 }, $set: { elo: winnerNewElo } }
+      ),
+      User.updateOne(
+        { uid: loserId },
+        { $inc: { losses: 1 }, $set: { elo: loserNewElo } }
+      ),
     ]);
 
-    console.log(`✅ Stats updated. Winner Elo: ${winnerNewElo}, Loser Elo: ${loserNewElo}`);
+    console.log(
+      `✅ Stats updated. Winner Elo: ${winnerNewElo}, Loser Elo: ${loserNewElo}`
+    );
   } catch (err) {
     console.error("❌ Failed to update stats:", err);
   }
@@ -111,14 +120,22 @@ function edgeKey(a, b) {
 function tigerHasValidMove(board) {
   return board.tigers.some((from) => {
     const directions = [
-      { dr: -1, dc: 0 }, { dr: 1, dc: 0 }, { dr: 0, dc: -1 }, { dr: 0, dc: 1 },
-      { dr: -1, dc: -1 }, { dr: -1, dc: 1 }, { dr: 1, dc: -1 }, { dr: 1, dc: 1 },
+      { dr: -1, dc: 0 },
+      { dr: 1, dc: 0 },
+      { dr: 0, dc: -1 },
+      { dr: 0, dc: 1 },
+      { dr: -1, dc: -1 },
+      { dr: -1, dc: 1 },
+      { dr: 1, dc: -1 },
+      { dr: 1, dc: 1 },
     ];
 
     for (const { dr, dc } of directions) {
       const to = { row: from.row + dr, col: from.col + dc };
       const key = edgeKey(from, to);
-      const occupied = board.goats.concat(board.tigers).some(p => p.row === to.row && p.col === to.col);
+      const occupied = board.goats
+        .concat(board.tigers)
+        .some((p) => p.row === to.row && p.col === to.col);
 
       if (VALID_EDGES.has(key) && !occupied) {
         return true;
@@ -131,10 +148,19 @@ function tigerHasValidMove(board) {
       const edge1 = edgeKey(from, mid);
       const edge2 = edgeKey(mid, to);
 
-      const midHasGoat = board.goats.some(g => g.row === mid.row && g.col === mid.col);
-      const toOccupied = board.goats.concat(board.tigers).some(p => p.row === to.row && p.col === to.col);
+      const midHasGoat = board.goats.some(
+        (g) => g.row === mid.row && g.col === mid.col
+      );
+      const toOccupied = board.goats
+        .concat(board.tigers)
+        .some((p) => p.row === to.row && p.col === to.col);
 
-      if (VALID_EDGES.has(edge1) && VALID_EDGES.has(edge2) && midHasGoat && !toOccupied) {
+      if (
+        VALID_EDGES.has(edge1) &&
+        VALID_EDGES.has(edge2) &&
+        midHasGoat &&
+        !toOccupied
+      ) {
         return true;
       }
     }
@@ -228,12 +254,24 @@ export default function initSocketServer(httpServer) {
       const challenge = await Challenge.findById(challengeId);
       if (turn === "tiger" && !tigerHasValidMove(board)) {
         console.log(`🏁 Tigers stuck. Goats win in ${challengeId}`);
-        io.to(challengeId).emit("game-over", { winnerUid: challenge.challengerUid });
+        await Challenge.findByIdAndUpdate(challengeId, {
+          result: "goat",
+          status: "completed",
+        });
+        io.to(challengeId).emit("game-over", {
+          winnerUid: challenge.challengerUid,
+        });
         return;
       }
       if (board.goatsKilled >= 5) {
         console.log(`🏁 Tigers win in ${challengeId}`);
-        io.to(challengeId).emit("game-over", { winnerUid: challenge.challengedUid });
+        await Challenge.findByIdAndUpdate(challengeId, {
+          result: "tiger",
+          status: "completed",
+        });
+        io.to(challengeId).emit("game-over", {
+          winnerUid: challenge.challengedUid,
+        });
         return;
       }
     });
@@ -285,8 +323,11 @@ export default function initSocketServer(httpServer) {
     socket.on("move", async ({ roomId, from, to }) => {
       const state = getRoomState(roomId);
       if (!state) return;
-      const arr = state.turn === "goat" ? state.board.goats : state.board.tigers;
-      const idx = arr.findIndex((p) => p.row === from.row && p.col === from.col);
+      const arr =
+        state.turn === "goat" ? state.board.goats : state.board.tigers;
+      const idx = arr.findIndex(
+        (p) => p.row === from.row && p.col === from.col
+      );
       arr[idx] = to;
       state.turn = state.turn === "goat" ? "tiger" : "goat";
       io.to(roomId).emit("state", state);
@@ -302,10 +343,14 @@ export default function initSocketServer(httpServer) {
       if (!state) return;
 
       const board = state.board;
-      const tigerIdx = board.tigers.findIndex((t) => t.row === from.row && t.col === from.col);
+      const tigerIdx = board.tigers.findIndex(
+        (t) => t.row === from.row && t.col === from.col
+      );
       if (tigerIdx === -1) return;
       board.tigers[tigerIdx] = to;
-      board.goats = board.goats.filter((g) => !(g.row === killed.row && g.col === killed.col));
+      board.goats = board.goats.filter(
+        (g) => !(g.row === killed.row && g.col === killed.col)
+      );
       board.goatsKilled++;
 
       if (board.goatsKilled >= 5) {
