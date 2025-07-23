@@ -9,7 +9,8 @@ router.post("/reject", async (req, res) => {
   const { challengeId } = req.body;
   try {
     const challenge = await Challenge.findById(challengeId);
-    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+    if (!challenge)
+      return res.status(404).json({ error: "Challenge not found" });
 
     challenge.status = "rejected";
     await challenge.save();
@@ -45,25 +46,26 @@ router.get("/:uid", async (req, res) => {
     // Fetch opponent names
     const userMap = {};
     const uids = Array.from(
-      new Set(challenges.flatMap(ch => [ch.challengerUid, ch.challengedUid]))
+      new Set(challenges.flatMap((ch) => [ch.challengerUid, ch.challengedUid]))
     );
 
     const users = await User.find({ uid: { $in: uids } });
-    users.forEach(user => {
+    users.forEach((user) => {
       userMap[user.uid] = {
         name: user.name,
         photo: user.photo,
       };
     });
 
-    const enriched = challenges.map(ch => {
-      const opponentUid = ch.challengerUid === uid ? ch.challengedUid : ch.challengerUid;
+    const enriched = challenges.map((ch) => {
+      const opponentUid =
+        ch.challengerUid === uid ? ch.challengedUid : ch.challengerUid;
       return {
         ...ch.toObject(),
         opponent: {
           uid: opponentUid,
           ...userMap[opponentUid],
-        }
+        },
       };
     });
 
@@ -73,7 +75,6 @@ router.get("/:uid", async (req, res) => {
     res.status(500).json({ error: "Error fetching challenges" });
   }
 });
-
 
 // 📌 Accept a challenge → set to "in_progress" and init board
 router.post("/accept", async (req, res) => {
@@ -90,10 +91,10 @@ router.post("/accept", async (req, res) => {
             { row: 1, col: 1 },
             { row: 1, col: 5 },
             { row: 5, col: 1 },
-            { row: 5, col: 5 }
+            { row: 5, col: 5 },
           ],
-          goatsKilled: 0
-        }
+          goatsKilled: 0,
+        },
       },
       { new: true }
     );
@@ -108,7 +109,8 @@ router.post("/accept", async (req, res) => {
 router.get("/resume/:challengeId", async (req, res) => {
   try {
     const challenge = await Challenge.findById(req.params.challengeId);
-    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+    if (!challenge)
+      return res.status(404).json({ error: "Challenge not found" });
 
     if (challenge.status !== "in_progress") {
       return res.status(400).json({ error: "Challenge is not in progress" });
@@ -120,7 +122,7 @@ router.get("/resume/:challengeId", async (req, res) => {
       turn: challenge.turn,
       challengeId: challenge._id,
       challengerUid: challenge.challengerUid,
-      challengedUid: challenge.challengedUid
+      challengedUid: challenge.challengedUid,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to resume challenge" });
@@ -133,7 +135,8 @@ router.post("/complete", async (req, res) => {
 
   try {
     const challenge = await Challenge.findById(challengeId);
-    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+    if (!challenge)
+      return res.status(404).json({ error: "Challenge not found" });
 
     challenge.status = "completed";
     challenge.result = winnerUid === "draw" ? "draw" : winnerUid;
@@ -146,7 +149,8 @@ router.post("/complete", async (req, res) => {
       player.gamesPlayed = (player.gamesPlayed || 0) + 1;
       player.elo = (player.elo || 1000) + (isWinner ? 25 : -15);
       player.wins = (player.wins || 0) + (isWinner ? 1 : 0);
-      player.losses = (player.losses || 0) + (!isWinner && winnerUid !== "draw" ? 1 : 0);
+      player.losses =
+        (player.losses || 0) + (!isWinner && winnerUid !== "draw" ? 1 : 0);
     };
 
     if (winnerUid === "draw") {

@@ -15,10 +15,7 @@ router.get("/", async (req, res) => {
   try {
     const regex = new RegExp(query, "i"); // case-insensitive search
     const results = await User.find({
-      $or: [
-        { name: { $regex: regex } },
-        { uid: { $regex: regex } },
-      ],
+      $or: [{ name: { $regex: regex } }, { uid: { $regex: regex } }],
     }).select("name uid photo elo");
 
     res.json({ results });

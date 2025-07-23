@@ -9,7 +9,9 @@ router.post("/", async (req, res) => {
     const { uid, message, rating } = req.body;
 
     if (!message) {
-      return res.status(400).json({ success: false, message: "Feedback message required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Feedback message required." });
     }
 
     const feedback = new Feedback({ uid, message, rating });

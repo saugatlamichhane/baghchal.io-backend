@@ -1,5 +1,5 @@
-import express from 'express';
-import User from '../models/User.js'; // adjust path as needed
+import express from "express";
+import User from "../models/User.js"; // adjust path as needed
 
 const router = express.Router();
 
@@ -11,7 +11,9 @@ router.get("/profile/:uid", async (req, res) => {
     const user = await User.findOne({ uid });
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.json({
@@ -23,7 +25,7 @@ router.get("/profile/:uid", async (req, res) => {
         elo: user.elo,
         wins: user.wins,
         losses: user.losses,
-        draws: user.draws // default
+        draws: user.draws, // default
         // Add more fields if needed
       },
     });

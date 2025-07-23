@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   email: String,
   photo: String,
   elo: { type: Number, default: 1000 },
-  friends: [{type: mongoose.Schema.Types.ObjectId, ref: "User"}],
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   gamesPlayed: { type: Number, default: 0 },
   wins: { type: Number, default: 0 },
   losses: { type: Number, default: 0 },

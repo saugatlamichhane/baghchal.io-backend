@@ -1,15 +1,15 @@
 // index.js
 import express from "express";
 import { createServer } from "http";
-import initSocketServer from "./socketServer.js"
+import initSocketServer from "./socketServer.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import admin from "./firebase-admin.js";
 import { connectDB } from "./db.js";
 import User from "./models/User.js";
-import profileRoutes from './routes/profile.js';
-import searchRoutes from './routes/search.js'
-import friendsRoutes from './routes/friends.js'
+import profileRoutes from "./routes/profile.js";
+import searchRoutes from "./routes/search.js";
+import friendsRoutes from "./routes/friends.js";
 import leaderboardRoutes from "./routes/leaderboard.js";
 import feedbackRoutes from "./routes/feedback.js";
 import challengeRoutes from "./routes/challenges.js";
@@ -49,7 +49,6 @@ app.post("/api/auth/google", async (req, res) => {
   }
 });
 
-
 app.use("/api", profileRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/friends", friendsRoutes);
@@ -59,4 +58,3 @@ app.use("/api/challenges", challengeRoutes);
 const httpServer = createServer(app);
 initSocketServer(httpServer);
 httpServer.listen(5000, () => console.log("🚀 Server running on port 5000"));
-

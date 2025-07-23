@@ -7,7 +7,9 @@ const router = express.Router();
 // GET all friends of a user
 router.get("/:uid", async (req, res) => {
   try {
-    const user = await User.findOne({ uid: req.params.uid }).populate("friends");
+    const user = await User.findOne({ uid: req.params.uid }).populate(
+      "friends"
+    );
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ friends: user.friends });
   } catch (err) {
@@ -21,7 +23,8 @@ router.post("/", async (req, res) => {
   try {
     const me = await User.findOne({ uid: myUid });
     const friend = await User.findOne({ uid: friendUid });
-    if (!me || !friend) return res.status(404).json({ error: "User not found" });
+    if (!me || !friend)
+      return res.status(404).json({ error: "User not found" });
 
     if (!me.friends.includes(friend._id)) {
       me.friends.push(friend._id);
@@ -40,9 +43,12 @@ router.delete("/", async (req, res) => {
   try {
     const me = await User.findOne({ uid: myUid });
     const friend = await User.findOne({ uid: friendUid });
-    if (!me || !friend) return res.status(404).json({ error: "User not found" });
+    if (!me || !friend)
+      return res.status(404).json({ error: "User not found" });
 
-    me.friends = me.friends.filter((id) => id.toString() !== friend._id.toString());
+    me.friends = me.friends.filter(
+      (id) => id.toString() !== friend._id.toString()
+    );
     await me.save();
 
     res.json({ success: true });
