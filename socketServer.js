@@ -183,6 +183,53 @@ export default function initSocketServer(httpServer) {
     console.log(`📥 ${socket.id} joined room ${challengeId}`);
   });
 
+  socket.on("make-goat-place", async ({ challengeId, to }) => {
+  try {
+    const challenge = await Challenge.findById(challengeId);
+    if (!challenge || challenge.status !== "in_progress") return;
+
+    const board = challenge.board || {
+      goats: [],
+      tigers: [
+        { row: 1, col: 1 },
+        { row: 1, col: 5 },
+        { row: 5, col: 1 },
+        { row: 5, col: 5 },
+      ],
+      goatsKilled: 0,
+    };
+
+    // Check if move is valid
+    const posStr = `${to.row}-${to.col}`;
+    const alreadyOccupied = board.goats.concat(board.tigers).some(p => p.row === to.row && p.col === to.col);
+    const goatLimitReached = board.goats.length >= 20;
+
+    if (alreadyOccupied || goatLimitReached) {
+      return; // invalid placement
+    }
+
+    // Place the goat
+    board.goats.push(to);
+    const nextTurn = "tiger";
+
+    // Save new board state
+    await Challenge.findByIdAndUpdate(challengeId, {
+      board,
+      turn: nextTurn,
+      updatedAt: new Date(),
+    });
+
+    // Notify other player
+    io.to(challengeId).emit("move_made", {
+      board,
+      turn: nextTurn,
+    });
+  } catch (err) {
+    console.error("❌ Error placing goat:", err);
+  }
+});
+
+
   // 👉 Handle move and broadcast to room
   socket.on("make_move", async ({ challengeId, board, turn }) => {
     try {
