@@ -112,6 +112,53 @@ async function updateStats(io, roomId, winner) {
   }
 }
 
+async function makeUpdateStats(challengeId, winner) {
+  const challenge = await Challenge.findById(challengeId);
+  const winnerId =
+    winner === "goat" ? challenge.challengerUid : challenge.challengedUid;
+  const loserId =
+    winner === "goat" ? challenge.challengedUid : challenge.challengerUid;
+
+  const K = 16;
+  console.log(`📈 Updating stats: Winner=${winnerId}, Loser=${loserId}`);
+
+  try {
+    const [winnerUser, loserUser] = await Promise.all([
+      User.findOne({ uid: winnerId }),
+      User.findOne({ uid: loserId }),
+    ]);
+
+    if (!winnerUser || !loserUser) {
+      console.error("❌ One or both users not found in DB");
+      return;
+    }
+
+    const expectedWin =
+      1 / (1 + Math.pow(10, (loserUser.elo - winnerUser.elo) / 400));
+    const expectedLose = 1 - expectedWin;
+
+    const winnerNewElo = Math.round(winnerUser.elo + K * (1 - expectedWin));
+    const loserNewElo = Math.round(loserUser.elo + K * (0 - expectedLose));
+
+    await Promise.all([
+      User.updateOne(
+        { uid: winnerId },
+        { $inc: { wins: 1 }, $set: { elo: winnerNewElo } }
+      ),
+      User.updateOne(
+        { uid: loserId },
+        { $inc: { losses: 1 }, $set: { elo: loserNewElo } }
+      ),
+    ]);
+
+    console.log(
+      `✅ Stats updated. Winner Elo: ${winnerNewElo}, Loser Elo: ${loserNewElo}`
+    );
+  } catch (err) {
+    console.error("❌ Failed to update stats:", err);
+  }
+}
+
 function edgeKey(a, b) {
   const [p1, p2] = [a, b].sort((x, y) => x.row - y.row || x.col - y.col);
   return `${p1.row}-${p1.col}:${p2.row}-${p2.col}`;
@@ -258,6 +305,7 @@ export default function initSocketServer(httpServer) {
           result: "goat",
           status: "completed",
         });
+        await makeUpdateStats(challengeId, "goat");
         io.to(challengeId).emit("game-over", {
           winnerUid: challenge.challengerUid,
         });
@@ -269,6 +317,7 @@ export default function initSocketServer(httpServer) {
           result: "tiger",
           status: "completed",
         });
+        await makeUpdateStats(challengeId, "tiger");
         io.to(challengeId).emit("game-over", {
           winnerUid: challenge.challengedUid,
         });
