@@ -220,7 +220,7 @@ export default function initSocketServer(httpServer) {
     });
 
     // Notify other player
-         socket.to(challengeId).emit("move_made", { board, nextTurn });
+         socket.to(challengeId).emit("move_made", { board, turn });
   } catch (err) {
     console.error("❌ Error placing goat:", err);
   }
