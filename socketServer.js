@@ -269,16 +269,16 @@ export default function initSocketServer(httpServer) {
       }
       const challenge = await Challenge.findById(challengeId);
       if (turn === "tiger" && !tigerHasValidMove(board)) {
-        socket
-          .to(challengeId)
-          .emit("game-over", { winner: challenge.challengerUid });
+        io.to(challengeId).emit("game-over", {
+          winnerUid: challenge.challengerUid,
+        });
         // await updateStats(io, challengeId, "goat");
         return;
       }
 
       if (board.goatsKilled >= 5) {
-        socket.to(challengeId).emit("game-over", {
-          winner: challenge.challengedUid,
+        io.to(challengeId).emit("game-over", {
+          winnerUid: challenge.challengedUid,
         });
         // await updateStats(io, challengeId, "tiger");
         return;
