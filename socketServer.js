@@ -183,21 +183,10 @@ export default function initSocketServer(httpServer) {
     console.log(`📥 ${socket.id} joined room ${challengeId}`);
   });
 
-  socket.on("make-goat-place", async ({ challengeId, to }) => {
+  socket.on("make-goat-place", async ({ challengeId, board, turn }) => {
   try {
     const challenge = await Challenge.findById(challengeId);
     if (!challenge || challenge.status !== "in_progress") return;
-
-    const board = challenge.board || {
-      goats: [],
-      tigers: [
-        { row: 1, col: 1 },
-        { row: 1, col: 5 },
-        { row: 5, col: 1 },
-        { row: 5, col: 5 },
-      ],
-      goatsKilled: 0,
-    };
 
     // Check if move is valid
     const posStr = `${to.row}-${to.col}`;
@@ -208,14 +197,10 @@ export default function initSocketServer(httpServer) {
       return; // invalid placement
     }
 
-    // Place the goat
-    board.goats.push(to);
-    const nextTurn = "tiger";
-
     // Save new board state
     await Challenge.findByIdAndUpdate(challengeId, {
       board,
-      turn: nextTurn,
+      turn,
       updatedAt: new Date(),
     });
 
