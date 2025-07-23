@@ -277,6 +277,9 @@ export default function initSocketServer(httpServer) {
       }
 
       if (board.goatsKilled >= 5) {
+        console.log(
+          `Game over: Tigers win in room ${challengeId}, winnerUid: ${challenge.challengedUid}`
+        );
         io.to(challengeId).emit("game-over", {
           winnerUid: challenge.challengedUid,
         });
