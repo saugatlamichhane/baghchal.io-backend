@@ -191,7 +191,7 @@ export default function initSocketServer(httpServer) {
     // Check if move is valid
     const goatLimitReached = board.goats.length >= 20;
 
-    if (alreadyOccupied || goatLimitReached) {
+    if (goatLimitReached) {
       return; // invalid placement
     }
 
