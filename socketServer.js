@@ -277,7 +277,7 @@ export default function initSocketServer(httpServer) {
       }
 
       if (board.goatsKilled >= 5) {
-        io.to(challengeId).emit("game-over", {
+        socket.to(challengeId).emit("game-over", {
           winner: challenge.challengedUid,
         });
         // await updateStats(io, challengeId, "tiger");
