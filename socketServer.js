@@ -266,11 +266,11 @@ export default function initSocketServer(httpServer) {
         const challenge = await Challenge.findById(challengeId);
         if (!challenge || challenge.status !== "in_progress") return;
 
-        const goatLimitReached = board.goats.length >= 20;
-        if (goatLimitReached) {
-          console.warn("⚠️ Max goats placed. Ignoring move.");
-          return;
-        }
+        // const goatLimitReached = board.goats.length >= 20;
+        // if (goatLimitReached) {
+        //   console.warn("⚠️ Max goats placed. Ignoring move.");
+        //   return;
+        // }
 
         await Challenge.findByIdAndUpdate(challengeId, {
           board,
