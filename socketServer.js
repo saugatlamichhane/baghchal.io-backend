@@ -236,7 +236,6 @@ export default function initSocketServer(httpServer) {
         { row: 5, col: 5 },
       ],
       goatsKilled: 0,
-      goatsPlaced: 0,
     };
   }
 
@@ -267,7 +266,7 @@ export default function initSocketServer(httpServer) {
         const challenge = await Challenge.findById(challengeId);
         if (!challenge || challenge.status !== "in_progress") return;
 
-        const goatLimitReached = board.goatsPlaced >= 20;
+        const goatLimitReached = board.goats.length >= 20;
         if (goatLimitReached) {
           console.warn("⚠️ Max goats placed. Ignoring move.");
           return;
@@ -366,7 +365,6 @@ export default function initSocketServer(httpServer) {
       const state = getRoomState(roomId);
       if (!state) return;
       state.board.goats.push(to);
-      state.board.goatsPlaced += 1
       state.turn = "tiger";
       io.to(roomId).emit("state", state);
     });
